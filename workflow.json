@@ -1,0 +1,609 @@
+{
+  "name": "Breaking Standup",
+  "nodes": [
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "triggerAtHour": 8
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        -160,
+        -272
+      ],
+      "id": "131fe2da-2701-4564-8346-84385e559093",
+      "name": "Schedule Trigger"
+    },
+    {
+      "parameters": {
+        "url": "",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "githubApi",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "author",
+              "value": ""
+            },
+            {
+              "name": "since",
+              "value": "={{ new Date(Date.now() - 180.5 * 60 * 60 * 1000).toISOString() }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.3,
+      "position": [
+        64,
+        -464
+      ],
+      "id": "d80ad5ea-0284-46f3-928d-c6e8f17f2b59",
+      "name": "Get Repo Commits",
+      "credentials": {
+        "githubApi": {
+          "id": "ND4PGkusvUA1ohbG",
+          "name": "GitHub account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "url": "=https://api.github.com/repos/zenstart-kits/nextjs-saas-starter/commits/{{ $json.sha }}",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "githubApi",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.3,
+      "position": [
+        288,
+        -464
+      ],
+      "id": "3cc70ffe-7c85-466b-8a36-9ebf95be7a50",
+      "name": "Get Commit Changes",
+      "credentials": {
+        "githubApi": {
+          "id": "ND4PGkusvUA1ohbG",
+          "name": "GitHub account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "fromEmail": "notifications@mydomain",
+        "toEmail": "",
+        "subject": "=Your Standup Update {{ new Date().toDateTime().toLocaleString() }}",
+        "emailFormat": "text",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.emailSend",
+      "typeVersion": 2.1,
+      "position": [
+        1264,
+        -368
+      ],
+      "id": "500abc2f-d3c7-4a0f-b6ab-95241c91d679",
+      "name": "Send email",
+      "webhookId": "3433a2bd-047c-4879-acce-0c35e838b7aa",
+      "credentials": {
+        "smtp": {
+          "id": "s9PRJFTpgqaJZYMA",
+          "name": "SMTP account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "getAll",
+        "limit": 150
+      },
+      "type": "n8n-nodes-base.linear",
+      "typeVersion": 1.1,
+      "position": [
+        64,
+        -272
+      ],
+      "id": "05cee552-b1aa-4f45-9dc7-7ab38005158b",
+      "name": "Get many issues",
+      "credentials": {
+        "linearApi": {
+          "id": "XRChnMH8j3EdigPx",
+          "name": "Linear account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "a2ba192f-15dd-4f18-92e3-10ca98087a37",
+              "leftValue": "={{ $json.assignee.displayName }}",
+              "rightValue": "elliott",
+              "operator": {
+                "type": "string",
+                "operation": "equals",
+                "name": "filter.operator.equals"
+              }
+            },
+            {
+              "id": "54cd650f-dd40-4311-81b4-887c70e9e841",
+              "leftValue": "={{ $json.state.name }}",
+              "rightValue": "In Progress",
+              "operator": {
+                "type": "string",
+                "operation": "equals",
+                "name": "filter.operator.equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.filter",
+      "typeVersion": 2.2,
+      "position": [
+        288,
+        -272
+      ],
+      "id": "9f21a89c-7363-4831-964a-a26704315d65",
+      "name": "Filter"
+    },
+    {
+      "parameters": {
+        "mode": "combine",
+        "combineBy": "combineByPosition",
+        "numberInputs": 3,
+        "options": {}
+      },
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 3.2,
+      "position": [
+        736,
+        -288
+      ],
+      "id": "56bf2563-5658-4d93-9d19-c4515f8f62fe",
+      "name": "Merge"
+    },
+    {
+      "parameters": {
+        "resource": "repository",
+        "operation": "getPullRequests",
+        "owner": {
+          "__rl": true,
+          "value": "zenstart-kits",
+          "mode": "list",
+          "cachedResultName": "zenstart-kits",
+          "cachedResultUrl": "https://github.com/zenstart-kits"
+        },
+        "repository": {
+          "__rl": true,
+          "value": "nextjs-saas-starter",
+          "mode": "list",
+          "cachedResultName": "nextjs-saas-starter",
+          "cachedResultUrl": "https://github.com/zenstart-kits/nextjs-saas-starter"
+        },
+        "getRepositoryPullRequestsFilters": {
+          "state": "open"
+        }
+      },
+      "type": "n8n-nodes-base.github",
+      "typeVersion": 1.1,
+      "position": [
+        288,
+        -80
+      ],
+      "id": "4412c71e-91da-4056-9a6a-43c4a421c6d1",
+      "name": "Get pull requests of a repository",
+      "webhookId": "594a7e40-cdc2-4154-9a08-54ca77c52379",
+      "alwaysOutputData": true,
+      "credentials": {
+        "githubApi": {
+          "id": "ND4PGkusvUA1ohbG",
+          "name": "GitHub account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "aggregate": "aggregateAllItemData",
+        "destinationFieldName": "open_prs",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.aggregate",
+      "typeVersion": 1,
+      "position": [
+        512,
+        -80
+      ],
+      "id": "63d60636-5990-40ac-afb4-d0acce27f39d",
+      "name": "Aggregate - PRs",
+      "alwaysOutputData": true
+    },
+    {
+      "parameters": {
+        "aggregate": "aggregateAllItemData",
+        "destinationFieldName": "current_tasks",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.aggregate",
+      "typeVersion": 1,
+      "position": [
+        512,
+        -272
+      ],
+      "id": "95e0b8bb-0a9c-428a-9f60-8bded51ad132",
+      "name": "Aggregate - Current Tasks"
+    },
+    {
+      "parameters": {
+        "aggregate": "aggregateAllItemData",
+        "destinationFieldName": "commits",
+        "include": "specifiedFields",
+        "fieldsToInclude": "files",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.aggregate",
+      "typeVersion": 1,
+      "position": [
+        512,
+        -464
+      ],
+      "id": "684b6978-46d9-4e77-af5c-1eac51b2037f",
+      "name": "Aggregate Commits"
+    },
+    {
+      "parameters": {
+        "authentication": "oAuth2",
+        "select": "user",
+        "user": {
+          "__rl": true,
+          "value": "U05K8BM2T6C",
+          "mode": "list",
+          "cachedResultName": "elliott"
+        },
+        "text": "={{ $('Summarize Work').item.json.output[0].content[0].text }}",
+        "otherOptions": {}
+      },
+      "type": "n8n-nodes-base.slack",
+      "typeVersion": 2.3,
+      "position": [
+        1616,
+        -80
+      ],
+      "id": "cf6343d2-4b29-4135-8481-01ee32288707",
+      "name": "Send to Myself",
+      "webhookId": "d694ad94-cadf-4467-b9f7-edb630606d85",
+      "credentials": {
+        "slackOAuth2Api": {
+          "id": "CRIq7Mv5xNpn4isM",
+          "name": "Slack OAuth"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "a8ef4af5-c127-450d-b115-18d1c90ee46d",
+              "leftValue": "={{ $json.isEmpty() }}",
+              "rightValue": "",
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        1408,
+        -176
+      ],
+      "id": "17a363ca-625f-4a97-946e-35ce700d1474",
+      "name": "If async"
+    },
+    {
+      "parameters": {
+        "authentication": "oAuth2",
+        "select": "channel",
+        "channelId": {
+          "__rl": true,
+          "value": "C09T9F1PLQL",
+          "mode": "list",
+          "cachedResultName": "engineering"
+        },
+        "text": "={{ $('Summarize Work').item.json.output[0].content[0].text }}",
+        "otherOptions": {}
+      },
+      "type": "n8n-nodes-base.slack",
+      "typeVersion": 2.3,
+      "position": [
+        1616,
+        -256
+      ],
+      "id": "9529d0f2-316c-4140-ad0c-0ded3e764c91",
+      "name": "Send to Engineering",
+      "webhookId": "d694ad94-cadf-4467-b9f7-edb630606d85",
+      "credentials": {
+        "slackOAuth2Api": {
+          "id": "CRIq7Mv5xNpn4isM",
+          "name": "Slack OAuth"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "modelId": {
+          "__rl": true,
+          "value": "gpt-5",
+          "mode": "list",
+          "cachedResultName": "GPT-5"
+        },
+        "responses": {
+          "values": [
+            {
+              "role": "system",
+              "content": "Please summarize the commits, and tasks in the next message as a simple standup update I can share with my colleagues.\n\nThe \"commits\" and \"previous_tasks\" fields are the work I did yesterday, the \"current_tasks\" are what I am doing today, and the \"open_prs\" are anything I'm currently blocked on.\n\nPlease be sure to make this sound like a natural update that I would speak or type out. Please ensure that I use concise language and talk about the high level achievements rather than the low level technicalities. If there were small changes, try to link them into the larger overall goal.\n\nBe concise and v high level. Make sure it's a nice short update to give my manager.\n\nMake sure to give it as if it is a spoken output and would be natural to read out loud in a meeting"
+            },
+            {
+              "content": "={{ JSON.stringify($json) }}"
+            }
+          ]
+        },
+        "builtInTools": {},
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.openAi",
+      "typeVersion": 2,
+      "position": [
+        960,
+        -272
+      ],
+      "id": "8e2d8c97-4935-4ebb-a329-32af0bbe366d",
+      "name": "Summarize Work",
+      "credentials": {
+        "openAiApi": {
+          "id": "ujCxNF4woCaeol7m",
+          "name": "OpenAi account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "getAll",
+        "calendar": {
+          "__rl": true,
+          "mode": "list",
+          "value": "elliott@dreamsof.io"
+        },
+        "timeMax": "={{ $now.plus({ day: 1 }) }}",
+        "options": {
+          "query": "Standup"
+        }
+      },
+      "type": "n8n-nodes-base.googleCalendar",
+      "typeVersion": 1.3,
+      "position": [
+        1264,
+        -176
+      ],
+      "id": "e4620498-74bf-4c1e-87c0-810e1d45cf76",
+      "name": "Get Standup Meeting",
+      "alwaysOutputData": true,
+      "credentials": {
+        "googleCalendarOAuth2Api": {
+          "id": "AS1tPeYfye4O2ibH",
+          "name": "Google Calendar account"
+        }
+      }
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Schedule Trigger": {
+      "main": [
+        [
+          {
+            "node": "Get Repo Commits",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Get many issues",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Get pull requests of a repository",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get Repo Commits": {
+      "main": [
+        [
+          {
+            "node": "Get Commit Changes",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get Commit Changes": {
+      "main": [
+        [
+          {
+            "node": "Aggregate Commits",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get many issues": {
+      "main": [
+        [
+          {
+            "node": "Filter",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Filter": {
+      "main": [
+        [
+          {
+            "node": "Aggregate - Current Tasks",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Merge": {
+      "main": [
+        [
+          {
+            "node": "Summarize Work",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get pull requests of a repository": {
+      "main": [
+        [
+          {
+            "node": "Aggregate - PRs",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Aggregate - PRs": {
+      "main": [
+        [
+          {
+            "node": "Merge",
+            "type": "main",
+            "index": 2
+          }
+        ]
+      ]
+    },
+    "Aggregate - Current Tasks": {
+      "main": [
+        [
+          {
+            "node": "Merge",
+            "type": "main",
+            "index": 1
+          }
+        ]
+      ]
+    },
+    "Aggregate Commits": {
+      "main": [
+        [
+          {
+            "node": "Merge",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If async": {
+      "main": [
+        [
+          {
+            "node": "Send to Engineering",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Send to Myself",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Summarize Work": {
+      "main": [
+        [
+          {
+            "node": "Send email",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Get Standup Meeting",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get Standup Meeting": {
+      "main": [
+        [
+          {
+            "node": "If async",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "5bd4a8d1-854b-492a-8f99-00525fcacb01",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "c692c3a3ef49ca06968498f5ed1dade1c23bfce0410ee875e1d0ebe8a952e4e8"
+  },
+  "id": "y749Mjv7HN10xfyH",
+  "tags": []
+}
